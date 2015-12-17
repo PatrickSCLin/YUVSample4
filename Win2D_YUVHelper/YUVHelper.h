@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+using namespace Windows::Graphics::DirectX::Direct3D11;
 using namespace Microsoft::Graphics::Canvas;
 using namespace Microsoft::WRL;
 
@@ -26,11 +27,11 @@ namespace Win2D
 			{
 				CanvasDevice^ get()
 				{
-					return GetOrCreate<CanvasDevice>(d2d_device.Get());
+					return win2d_device;
 				}
 			}
 
-			void DrawImage(CanvasDrawingSession^ session, const Platform::Array<byte>^ bytes, int width, int height);
+			void DrawImage(CanvasDrawingSession^ session, const Platform::Array<byte>^ data, int width, int height);
 
 		private:
 
@@ -42,7 +43,9 @@ namespace Win2D
 
 			ComPtr<ID2D1Device1> d2d_device;
 
-			ComPtr<ID2D1DeviceContext2>d2d_context;
+			CanvasDevice^ win2d_device;
+
+			CanvasVirtualBitmap^ win2d_bitmap;
 
 			YUVHelper();
 

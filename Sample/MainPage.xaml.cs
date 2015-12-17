@@ -36,13 +36,23 @@ namespace Sample
 
         CanvasRenderTarget renderTarget;
 
+        DispatcherTimer updateTimer;
+
+        long timestamp = 0;
+
+        UInt16 countsOfFPS = 0;
+
+        UInt16 fpsRate = 0;
+
+        Stopwatch sw = new Stopwatch();
+
         public MainPage()
         {
             this.InitializeComponent();
 
             this.source = File.ReadAllBytes("frame_nv12.yuv");
 
-            YUVHelper.SharedInstance.DrawImage(null, this.source, 4000, 3000);
+            CanvasDevice.DebugLevel = CanvasDebugLevel.Information;
         }
 
         private void CanvasSwapChainPanel_Loaded(object sender, RoutedEventArgs e)
@@ -61,17 +71,15 @@ namespace Sample
 
             this.renderTarget = new CanvasRenderTarget(this.device, width, height, 96);
 
-            YUVHelper.SharedInstance.DrawImage(this.renderTarget.CreateDrawingSession(), this.source, 4000, 3000);
+            this.updateTimer = new DispatcherTimer();
 
-            //unsafe
-            //{
-            //    fixed(byte* dataPtr = this.source)
-            //    {
-            //        YUVHelper.SharedInstance.DrawImage(this.renderTarget.CreateDrawingSession(), ((IntPtr)dataPtr).ToInt32(), 4000, 3000);
-            //    }
-            //}
+            this.updateTimer.Interval = TimeSpan.FromTicks(111111);
 
-            this.draw();
+            this.updateTimer.Tick += this.update;
+
+            this.sw.Start();
+
+            this.updateTimer.Start();
         }
 
         private void CanvasSwapChainPanel_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -79,22 +87,51 @@ namespace Sample
             if (this.swapChain == null) { return; }
 
             this.swapChain.ResizeBuffers(e.NewSize);
-
-            this.draw();
         }
 
         private void CanvasSwapChainPanel_CompositionScaleChanged(SwapChainPanel sender, object args)
         {
             if (this.swapChain == null) { return; }
+        }
+
+
+        private void update(object sender, object e)
+        {
+            using (var session = this.renderTarget.CreateDrawingSession())
+            {
+                YUVHelper.SharedInstance.DrawImage(session, this.source, 4000, 3000);
+            }
 
             this.draw();
+
+            timestamp += sw.ElapsedMilliseconds;
+
+            if (this.timestamp >= 1000)
+            {
+                this.fpsRate = this.countsOfFPS;
+
+                this.countsOfFPS = 0;
+
+                this.timestamp = 0;
+            }
+
+            this.sw.Restart();
         }
 
         private void draw()
         {
+            this.countsOfFPS++;
+
             using (var session = this.swapChain.CreateDrawingSession(Colors.Black))
             {
-                session.DrawImage(this.renderTarget);
+                session.Antialiasing = CanvasAntialiasing.Aliased;
+
+                if (this.renderTarget != null)
+                {
+                    session.DrawImage(this.renderTarget);
+                }
+
+                session.DrawText("fps: " + this.fpsRate, 0, 0, Colors.Red);
             }
 
             this.swapChain.Present();

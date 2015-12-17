@@ -12,3 +12,4 @@
 #include <d3d11_1.h>
 #include <d3d11_2.h>
 #include <Microsoft.Graphics.Canvas.native.h>
+#include <Windows.Graphics.DirectX.Direct3D11.interop.h>

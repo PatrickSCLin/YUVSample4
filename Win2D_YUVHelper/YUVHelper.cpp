@@ -18,7 +18,7 @@ namespace DX
 
 YUVHelper::YUVHelper()
 {
-	D3D_FEATURE_LEVEL features[] = {
+	D3D_FEATURE_LEVEL _d3d_feature_levels[] = {
 		D3D_FEATURE_LEVEL_11_1,
 		D3D_FEATURE_LEVEL_11_0,
 		D3D_FEATURE_LEVEL_10_1,
@@ -26,41 +26,27 @@ YUVHelper::YUVHelper()
 	};
 
 	DX::ThrowIfFailed(D3D11CreateDevice(
-		NULL,
+		nullptr,
 		D3D_DRIVER_TYPE::D3D_DRIVER_TYPE_HARDWARE,
-		NULL,
+		0,
 		D3D11_CREATE_DEVICE_FLAG::D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-		features,
-		ARRAYSIZE(features),
+		_d3d_feature_levels,
+		ARRAYSIZE(_d3d_feature_levels),
 		D3D11_SDK_VERSION,
 		&d3d_device,
 		&d3d_feature,
 		&d3d_context
 		));
 
-	ComPtr<IDXGIDevice> dxgiDevice;
+	ComPtr<IDXGIDevice> _dxgi_device;
 
-	DX::ThrowIfFailed(d3d_device.As(&dxgiDevice));
+	DX::ThrowIfFailed(d3d_device.As(&_dxgi_device));
 
-	D2D1_CREATION_PROPERTIES properties;
+	win2d_device = CanvasDevice::CreateFromDirect3D11Device(CreateDirect3DDevice(_dxgi_device.Get()));
 
-	properties.debugLevel = D2D1_DEBUG_LEVEL::D2D1_DEBUG_LEVEL_INFORMATION;
+	ComPtr<ID2D1Device> _d2d_device = GetWrappedResource<ID2D1Device>(win2d_device);
 
-	properties.options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_NONE;
-
-	properties.threadingMode = D2D1_THREADING_MODE::D2D1_THREADING_MODE_SINGLE_THREADED;
-
-	ComPtr<ID2D1Device> d2dDevice;
-
-	DX::ThrowIfFailed(D2D1CreateDevice(dxgiDevice.Get(), &properties, &d2dDevice));
-
-	DX::ThrowIfFailed(d2dDevice.As(&d2d_device));
-
-	ComPtr<ID2D1DeviceContext1> d2dContext;
-
-	DX::ThrowIfFailed(d2d_device->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &d2dContext));
-
-	DX::ThrowIfFailed(d2dContext.As(&d2d_context));
+	DX::ThrowIfFailed(_d2d_device.As(&d2d_device));
 }
 
 YUVHelper::~YUVHelper()
@@ -68,55 +54,64 @@ YUVHelper::~YUVHelper()
 
 }
 
-void YUVHelper::DrawImage(CanvasDrawingSession^ session, const Platform::Array<byte>^ bytes, int width, int height)
+void YUVHelper::DrawImage(CanvasDrawingSession^ session, const Platform::Array<byte>^ data, int width, int height)
 {
-	D3D11_TEXTURE2D_DESC desc;
+	if (win2d_bitmap == nullptr)
+	{
+		D3D11_TEXTURE2D_DESC _d3d_texture_desc;
 
-	desc.Width = width;
+		_d3d_texture_desc.Width = width;
 
-	desc.Height = height;
+		_d3d_texture_desc.Height = height;
 
-	desc.MipLevels = 1;
+		_d3d_texture_desc.MipLevels = 1;
 
-	desc.ArraySize = 1;
+		_d3d_texture_desc.ArraySize = 1;
 
-	desc.Format = DXGI_FORMAT::DXGI_FORMAT_NV12;
+		_d3d_texture_desc.Format = DXGI_FORMAT::DXGI_FORMAT_NV12;
 
-	desc.Usage = D3D11_USAGE::D3D11_USAGE_DEFAULT;
+		_d3d_texture_desc.Usage = D3D11_USAGE::D3D11_USAGE_DEFAULT;
 
-	desc.SampleDesc.Count = 1;
+		_d3d_texture_desc.SampleDesc.Count = 1;
 
-	desc.SampleDesc.Quality = 0;
+		_d3d_texture_desc.SampleDesc.Quality = 0;
 
-	desc.BindFlags = D3D11_BIND_FLAG::D3D11_BIND_SHADER_RESOURCE;
+		_d3d_texture_desc.BindFlags = D3D11_BIND_FLAG::D3D11_BIND_SHADER_RESOURCE;
 
-	desc.CPUAccessFlags = 0;
+		_d3d_texture_desc.CPUAccessFlags = 0;
 
-	desc.MiscFlags = 0;
+		_d3d_texture_desc.MiscFlags = 0;
 
-	D3D11_SUBRESOURCE_DATA data;
+		D3D11_SUBRESOURCE_DATA _d3d_texture_data;
 
-	data.pSysMem = bytes->Data;
+		_d3d_texture_data.pSysMem = data->Data;
 
-	data.SysMemPitch = width;
+		_d3d_texture_data.SysMemPitch = width;
 
-	ComPtr<ID3D11Texture2D> texture;
+		ComPtr<ID3D11Texture2D> _d3d_texture;
 
-	DX::ThrowIfFailed(d3d_device->CreateTexture2D(&desc, &data, &texture));
+		DX::ThrowIfFailed(d3d_device->CreateTexture2D(&_d3d_texture_desc, &_d3d_texture_data, &_d3d_texture));
 
-	ComPtr<IDXGISurface> surface;
+		IDXGISurface* _dxgi_surface;
 
-	DX::ThrowIfFailed(texture.As(&surface));
+		DX::ThrowIfFailed(_d3d_texture.Get()->QueryInterface<IDXGISurface>(&_dxgi_surface));
 
-	ComPtr<ID2D1ImageSource> imageSource;
+		ComPtr<ID2D1DeviceContext1> _d2d_context = GetWrappedResource<ID2D1DeviceContext1>(session);
 
-	DX::ThrowIfFailed(d2d_context->CreateImageSourceFromDxgi(&surface, 1, DXGI_COLOR_SPACE_TYPE::DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS::D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_NONE, &imageSource));
+		ID2D1DeviceContext2* _d2d_context2;
 
-	CanvasVirtualBitmap^ bitmap = GetOrCreate<CanvasVirtualBitmap>(Device, imageSource.Get());
+		DX::ThrowIfFailed(_d2d_context.Get()->QueryInterface<ID2D1DeviceContext2>(&_d2d_context2));
+
+		ComPtr<ID2D1ImageSource> _d2d_image_source;
+
+		DX::ThrowIfFailed(_d2d_context2->CreateImageSourceFromDxgi(&_dxgi_surface, 1, DXGI_COLOR_SPACE_TYPE::DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS::D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_NONE, &_d2d_image_source));
+
+		win2d_bitmap = GetOrCreate<CanvasVirtualBitmap>(Device, _d2d_image_source.Get());
+	}
 
 	session->Antialiasing = CanvasAntialiasing::Aliased;
 
 	session->Clear(Colors::Black);
 
-	session->DrawImage(bitmap);
+	session->DrawImage(win2d_bitmap);
 }
