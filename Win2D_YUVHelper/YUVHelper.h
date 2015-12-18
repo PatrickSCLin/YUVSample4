@@ -31,6 +31,8 @@ namespace Win2D
 				}
 			}
 
+			CanvasVirtualBitmap^ CreateVirtuaBimapFromBytes(CanvasDrawingSession^ session, const Platform::Array<byte>^ data, int width, int height);
+
 			void DrawImage(CanvasDrawingSession^ session, const Platform::Array<byte>^ data, int width, int height);
 
 		private:
@@ -44,8 +46,6 @@ namespace Win2D
 			ComPtr<ID2D1Device1> d2d_device;
 
 			CanvasDevice^ win2d_device;
-
-			CanvasVirtualBitmap^ win2d_bitmap;
 
 			YUVHelper();
 

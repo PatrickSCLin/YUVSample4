@@ -116,6 +116,8 @@ namespace Sample
             }
 
             this.sw.Restart();
+
+            GC.Collect();
         }
 
         private void draw()

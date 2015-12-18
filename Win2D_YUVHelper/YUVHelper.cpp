@@ -54,62 +54,66 @@ YUVHelper::~YUVHelper()
 
 }
 
+CanvasVirtualBitmap^ YUVHelper::CreateVirtuaBimapFromBytes(CanvasDrawingSession^ session, const Platform::Array<byte>^ data, int width, int height)
+{
+	D3D11_TEXTURE2D_DESC _d3d_texture_desc;
+
+	_d3d_texture_desc.Width = width;
+
+	_d3d_texture_desc.Height = height;
+
+	_d3d_texture_desc.MipLevels = 1;
+
+	_d3d_texture_desc.ArraySize = 1;
+
+	_d3d_texture_desc.Format = DXGI_FORMAT::DXGI_FORMAT_NV12;
+
+	_d3d_texture_desc.Usage = D3D11_USAGE::D3D11_USAGE_DEFAULT;
+
+	_d3d_texture_desc.SampleDesc.Count = 1;
+
+	_d3d_texture_desc.SampleDesc.Quality = 0;
+
+	_d3d_texture_desc.BindFlags = D3D11_BIND_FLAG::D3D11_BIND_SHADER_RESOURCE;
+
+	_d3d_texture_desc.CPUAccessFlags = 0;
+
+	_d3d_texture_desc.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA _d3d_texture_data;
+
+	_d3d_texture_data.pSysMem = data->Data;
+
+	_d3d_texture_data.SysMemPitch = width;
+
+	ComPtr<ID3D11Texture2D> _d3d_texture;
+
+	DX::ThrowIfFailed(d3d_device->CreateTexture2D(&_d3d_texture_desc, &_d3d_texture_data, &_d3d_texture));
+
+	ComPtr<IDXGISurface> _dxgi_surface;
+
+	DX::ThrowIfFailed(_d3d_texture.As(&_dxgi_surface));
+
+	ComPtr<ID2D1DeviceContext1> _d2d_context = GetWrappedResource<ID2D1DeviceContext1>(session);
+
+	ComPtr<ID2D1DeviceContext2> _d2d_context2;
+
+	DX::ThrowIfFailed(_d2d_context.As(&_d2d_context2));
+
+	ComPtr<ID2D1ImageSource> _d2d_image_source;
+
+	IDXGISurface* surfaces[1] = { _dxgi_surface.Get() };
+
+	DX::ThrowIfFailed(_d2d_context2->CreateImageSourceFromDxgi(surfaces, 1, DXGI_COLOR_SPACE_TYPE::DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS::D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_NONE, &_d2d_image_source));
+
+	CanvasVirtualBitmap^ win2d_bitmap = GetOrCreate<CanvasVirtualBitmap>(Device, _d2d_image_source.Get());
+
+	return win2d_bitmap;
+}
+
 void YUVHelper::DrawImage(CanvasDrawingSession^ session, const Platform::Array<byte>^ data, int width, int height)
 {
-	if (win2d_bitmap == nullptr)
-	{
-		D3D11_TEXTURE2D_DESC _d3d_texture_desc;
-
-		_d3d_texture_desc.Width = width;
-
-		_d3d_texture_desc.Height = height;
-
-		_d3d_texture_desc.MipLevels = 1;
-
-		_d3d_texture_desc.ArraySize = 1;
-
-		_d3d_texture_desc.Format = DXGI_FORMAT::DXGI_FORMAT_NV12;
-
-		_d3d_texture_desc.Usage = D3D11_USAGE::D3D11_USAGE_DEFAULT;
-
-		_d3d_texture_desc.SampleDesc.Count = 1;
-
-		_d3d_texture_desc.SampleDesc.Quality = 0;
-
-		_d3d_texture_desc.BindFlags = D3D11_BIND_FLAG::D3D11_BIND_SHADER_RESOURCE;
-
-		_d3d_texture_desc.CPUAccessFlags = 0;
-
-		_d3d_texture_desc.MiscFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA _d3d_texture_data;
-
-		_d3d_texture_data.pSysMem = data->Data;
-
-		_d3d_texture_data.SysMemPitch = width;
-
-		ComPtr<ID3D11Texture2D> _d3d_texture;
-
-		DX::ThrowIfFailed(d3d_device->CreateTexture2D(&_d3d_texture_desc, &_d3d_texture_data, &_d3d_texture));
-
-		ComPtr<IDXGISurface> _dxgi_surface;
-
-		DX::ThrowIfFailed(_d3d_texture.As(&_dxgi_surface));
-
-		ComPtr<ID2D1DeviceContext1> _d2d_context = GetWrappedResource<ID2D1DeviceContext1>(session);
-
-		ComPtr<ID2D1DeviceContext2> _d2d_context2;
-
-        DX::ThrowIfFailed(_d2d_context.As(&_d2d_context2));
-
-		ComPtr<ID2D1ImageSource> _d2d_image_source;
-
-        IDXGISurface* surfaces[1] = { _dxgi_surface.Get() };
-
-		DX::ThrowIfFailed(_d2d_context2->CreateImageSourceFromDxgi(surfaces, 1, DXGI_COLOR_SPACE_TYPE::DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS::D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_NONE, &_d2d_image_source));
-
-		win2d_bitmap = GetOrCreate<CanvasVirtualBitmap>(Device, _d2d_image_source.Get());
-	}
+	CanvasVirtualBitmap^ win2d_bitmap = CreateVirtuaBimapFromBytes(session, data, width, height);
 
 	session->Antialiasing = CanvasAntialiasing::Aliased;
 
