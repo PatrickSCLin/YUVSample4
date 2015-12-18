@@ -92,19 +92,21 @@ void YUVHelper::DrawImage(CanvasDrawingSession^ session, const Platform::Array<b
 
 		DX::ThrowIfFailed(d3d_device->CreateTexture2D(&_d3d_texture_desc, &_d3d_texture_data, &_d3d_texture));
 
-		IDXGISurface* _dxgi_surface;
+		ComPtr<IDXGISurface> _dxgi_surface;
 
-		DX::ThrowIfFailed(_d3d_texture.Get()->QueryInterface<IDXGISurface>(&_dxgi_surface));
+		DX::ThrowIfFailed(_d3d_texture.As(&_dxgi_surface));
 
 		ComPtr<ID2D1DeviceContext1> _d2d_context = GetWrappedResource<ID2D1DeviceContext1>(session);
 
-		ID2D1DeviceContext2* _d2d_context2;
+		ComPtr<ID2D1DeviceContext2> _d2d_context2;
 
-		DX::ThrowIfFailed(_d2d_context.Get()->QueryInterface<ID2D1DeviceContext2>(&_d2d_context2));
+        DX::ThrowIfFailed(_d2d_context.As(&_d2d_context2));
 
 		ComPtr<ID2D1ImageSource> _d2d_image_source;
 
-		DX::ThrowIfFailed(_d2d_context2->CreateImageSourceFromDxgi(&_dxgi_surface, 1, DXGI_COLOR_SPACE_TYPE::DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS::D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_NONE, &_d2d_image_source));
+        IDXGISurface* surfaces[1] = { _dxgi_surface.Get() };
+
+		DX::ThrowIfFailed(_d2d_context2->CreateImageSourceFromDxgi(surfaces, 1, DXGI_COLOR_SPACE_TYPE::DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS::D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_NONE, &_d2d_image_source));
 
 		win2d_bitmap = GetOrCreate<CanvasVirtualBitmap>(Device, _d2d_image_source.Get());
 	}
