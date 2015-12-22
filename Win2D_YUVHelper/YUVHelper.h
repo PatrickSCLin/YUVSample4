@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+using namespace Windows::Foundation;
 using namespace Windows::Graphics::DirectX::Direct3D11;
 using namespace Microsoft::Graphics::Canvas;
 using namespace Microsoft::WRL;
@@ -31,9 +32,7 @@ namespace Win2D
 				}
 			}
 
-			CanvasVirtualBitmap^ CreateVirtuaBimapFromBytes(CanvasDrawingSession^ session, const Platform::Array<byte>^ data, int width, int height);
-
-			void DrawImage(CanvasDrawingSession^ session, const Platform::Array<byte>^ data, int width, int height);
+			void DrawImage(CanvasDrawingSession^ session, int32 dataPtr, int width, int height);
 
 		private:
 
@@ -46,6 +45,8 @@ namespace Win2D
 			ComPtr<ID2D1Device1> d2d_device;
 
 			CanvasDevice^ win2d_device;
+
+			CanvasVirtualBitmap^ CreateVirtuaBimapFromBytes(ComPtr<ID2D1DeviceContext1> context, void* data, int width, int height);
 
 			YUVHelper();
 

@@ -54,7 +54,7 @@ YUVHelper::~YUVHelper()
 
 }
 
-CanvasVirtualBitmap^ YUVHelper::CreateVirtuaBimapFromBytes(CanvasDrawingSession^ session, const Platform::Array<byte>^ data, int width, int height)
+CanvasVirtualBitmap^ YUVHelper::CreateVirtuaBimapFromBytes(ComPtr<ID2D1DeviceContext1> context, void* data, int width, int height)
 {
 	D3D11_TEXTURE2D_DESC _d3d_texture_desc;
 
@@ -82,7 +82,7 @@ CanvasVirtualBitmap^ YUVHelper::CreateVirtuaBimapFromBytes(CanvasDrawingSession^
 
 	D3D11_SUBRESOURCE_DATA _d3d_texture_data;
 
-	_d3d_texture_data.pSysMem = data->Data;
+	_d3d_texture_data.pSysMem = data;
 
 	_d3d_texture_data.SysMemPitch = width;
 
@@ -94,7 +94,7 @@ CanvasVirtualBitmap^ YUVHelper::CreateVirtuaBimapFromBytes(CanvasDrawingSession^
 
 	DX::ThrowIfFailed(_d3d_texture.As(&_dxgi_surface));
 
-	ComPtr<ID2D1DeviceContext1> _d2d_context = GetWrappedResource<ID2D1DeviceContext1>(session);
+	ComPtr<ID2D1DeviceContext1> _d2d_context = context;
 
 	ComPtr<ID2D1DeviceContext2> _d2d_context2;
 
@@ -111,13 +111,21 @@ CanvasVirtualBitmap^ YUVHelper::CreateVirtuaBimapFromBytes(CanvasDrawingSession^
 	return win2d_bitmap;
 }
 
-void YUVHelper::DrawImage(CanvasDrawingSession^ session, const Platform::Array<byte>^ data, int width, int height)
+void YUVHelper::DrawImage(CanvasDrawingSession^ session, int32 dataPtr, int width, int height)
 {
-	CanvasVirtualBitmap^ win2d_bitmap = CreateVirtuaBimapFromBytes(session, data, width, height);
+	ComPtr<ID2D1DeviceContext1> _d2d_context = GetWrappedResource<ID2D1DeviceContext1>(session);
+
+	CanvasVirtualBitmap^ win2d_bitmap = CreateVirtuaBimapFromBytes(_d2d_context, (void*)IntPtr(dataPtr), width, height);
+
+	D2D1_SIZE_F size = _d2d_context->GetSize();
+
+	Rect destinationRect = Rect(0, 0, size.width, size.height);
+
+	Rect sourceRect = Rect(0, 0, width, height);
 
 	session->Antialiasing = CanvasAntialiasing::Aliased;
 
 	session->Clear(Colors::Black);
 
-	session->DrawImage(win2d_bitmap);
+	session->DrawImage(win2d_bitmap, destinationRect, sourceRect);
 }

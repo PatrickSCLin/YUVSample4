@@ -51,8 +51,6 @@ namespace Sample
             this.InitializeComponent();
 
             this.source = File.ReadAllBytes("frame_nv12.yuv");
-
-            CanvasDevice.DebugLevel = CanvasDebugLevel.Information;
         }
 
         private void CanvasSwapChainPanel_Loaded(object sender, RoutedEventArgs e)
@@ -73,7 +71,7 @@ namespace Sample
 
             this.updateTimer = new DispatcherTimer();
 
-            this.updateTimer.Interval = TimeSpan.FromTicks(111111);
+            this.updateTimer.Interval = TimeSpan.FromTicks(11111);
 
             this.updateTimer.Tick += this.update;
 
@@ -94,12 +92,17 @@ namespace Sample
             if (this.swapChain == null) { return; }
         }
 
-
         private void update(object sender, object e)
         {
             using (var session = this.renderTarget.CreateDrawingSession())
             {
-                YUVHelper.SharedInstance.DrawImage(session, this.source, 4000, 3000);
+                unsafe
+                {
+                    fixed(byte* dataPtr = this.source)
+                    {
+                        YUVHelper.SharedInstance.DrawImage(session, ((IntPtr)dataPtr).ToInt32(), 4000, 3000);
+                    }
+                }       
             }
 
             this.draw();
@@ -130,7 +133,7 @@ namespace Sample
 
                 if (this.renderTarget != null)
                 {
-                    session.DrawImage(this.renderTarget);
+                    session.DrawImage(this.renderTarget, new Rect(new Point(0, 0), this.swapChain.Size));
                 }
 
                 session.DrawText("fps: " + this.fpsRate, 0, 0, Colors.Red);
