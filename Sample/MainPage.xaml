@@ -9,6 +9,6 @@
     mc:Ignorable="d">
 
     <Grid>
-        <canvas:CanvasSwapChainPanel Loaded="CanvasSwapChainPanel_Loaded" SizeChanged="CanvasSwapChainPanel_SizeChanged" CompositionScaleChanged="CanvasSwapChainPanel_CompositionScaleChanged"/>
+        <canvas:CanvasAnimatedControl Loaded="CanvasAnimatedControl_Loaded" Draw="CanvasAnimatedControl_Draw"/>
     </Grid>
 </Page>

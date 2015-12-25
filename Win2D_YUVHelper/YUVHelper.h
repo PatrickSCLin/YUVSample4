@@ -32,7 +32,17 @@ namespace Win2D
 				}
 			}
 
-			void DrawImage(CanvasDrawingSession^ session, int32 dataPtr, int width, int height);
+			IDirect3DSurface^ CreateDirect3DSurface(int32 dataPtr, int width, int height);
+
+			CanvasVirtualBitmap^ CreateCanvasVirtualBimap(CanvasDrawingSession^ session, int32 dataPtr, int width, int height);
+
+			CanvasVirtualBitmap^ CreateCanvasVirtualBimap(CanvasDrawingSession^ session, IDirect3DSurface^ surface, int width, int height);
+
+			void DrawImage(CanvasDrawingSession^ session, IDirect3DSurface^ surface, Rect destinationRect, Rect sourceRect);
+
+			void DrawImage(CanvasDrawingSession^ session, CanvasVirtualBitmap^ bitmap, Rect destinationRect, Rect sourceRect);
+
+			void DrawImage(CanvasDrawingSession^ session, int32 dataPtr, Rect destinationRect, Rect sourceRect);
 
 		private:
 
@@ -45,8 +55,6 @@ namespace Win2D
 			ComPtr<ID2D1Device1> d2d_device;
 
 			CanvasDevice^ win2d_device;
-
-			CanvasVirtualBitmap^ CreateVirtuaBimapFromBytes(ComPtr<ID2D1DeviceContext1> context, void* data, int width, int height);
 
 			YUVHelper();
 

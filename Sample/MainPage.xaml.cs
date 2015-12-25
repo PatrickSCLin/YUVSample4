@@ -13,10 +13,13 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
+using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Windows.UI;
+using Windows.Graphics.DirectX.Direct3D11;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
+using Microsoft.Graphics.Canvas.Text;
 using Win2D.YUV;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
@@ -28,118 +31,446 @@ namespace Sample
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        byte[] source;
+        byte[] source = File.ReadAllBytes("nv12_448_252.yuv");
 
-        CanvasDevice device;
+        List<IDirect3DSurface> surfaces = new List<IDirect3DSurface>();
 
-        CanvasSwapChain swapChain;
+        DispatcherTimer timer = new DispatcherTimer();
 
-        CanvasRenderTarget renderTarget;
+        int fps = 0;
 
-        DispatcherTimer updateTimer;
+        int fpsCount = 0;
 
-        long timestamp = 0;
+        Size renderSize = new Size(448, 252);
 
-        UInt16 countsOfFPS = 0;
+        System.Threading.Timer taskTimer;
 
-        UInt16 fpsRate = 0;
+        System.Threading.Timer taskTimer2;
 
-        Stopwatch sw = new Stopwatch();
+        System.Threading.Timer taskTimer3;
+
+        System.Threading.Timer taskTimer4;
+
+        System.Threading.Timer taskTimer5;
+
+        System.Threading.Timer taskTimer6;
+
+        System.Threading.Timer taskTimer7;
+
+        System.Threading.Timer taskTimer8;
+
+        System.Threading.Timer taskTimer9;
+
+        System.Threading.Timer taskTimer10;
+
+        System.Threading.Timer taskTimer11;
+
+        System.Threading.Timer taskTimer12;
+
+        System.Threading.Timer taskTimer13;
+
+        System.Threading.Timer taskTimer14;
+
+        System.Threading.Timer taskTimer15;
+
+        System.Threading.Timer taskTimer16;
+
+        System.Threading.Timer taskTimer17;
+
+        System.Threading.Timer taskTimer18;
+
+        System.Threading.Timer taskTimer19;
+
+        System.Threading.Timer taskTimer20;
 
         public MainPage()
         {
             this.InitializeComponent();
 
-            this.source = File.ReadAllBytes("frame_nv12.yuv");
-        }
+            timer.Interval = TimeSpan.FromSeconds(1);
 
-        private void CanvasSwapChainPanel_Loaded(object sender, RoutedEventArgs e)
-        {
-            var swapChainPanel = sender as CanvasSwapChainPanel;
+            timer.Tick += this.fpsTask;
 
-            float width = (float)swapChainPanel.ActualWidth;
+            timer.Start();
 
-            float height = (float)swapChainPanel.ActualHeight;
-
-            this.device = YUVHelper.SharedInstance.Device;
-
-            this.swapChain = new CanvasSwapChain(this.device, width, height, 96);
-
-            swapChainPanel.SwapChain = this.swapChain;
-
-            this.renderTarget = new CanvasRenderTarget(this.device, width, height, 96);
-
-            this.updateTimer = new DispatcherTimer();
-
-            this.updateTimer.Interval = TimeSpan.FromTicks(11111);
-
-            this.updateTimer.Tick += this.update;
-
-            this.sw.Start();
-
-            this.updateTimer.Start();
-        }
-
-        private void CanvasSwapChainPanel_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            if (this.swapChain == null) { return; }
-
-            this.swapChain.ResizeBuffers(e.NewSize);
-        }
-
-        private void CanvasSwapChainPanel_CompositionScaleChanged(SwapChainPanel sender, object args)
-        {
-            if (this.swapChain == null) { return; }
-        }
-
-        private void update(object sender, object e)
-        {
-            using (var session = this.renderTarget.CreateDrawingSession())
+            for (int i = 0; i < 64; i++)
             {
                 unsafe
                 {
-                    fixed(byte* dataPtr = this.source)
+                    fixed (byte* dataPtr = this.source)
                     {
-                        YUVHelper.SharedInstance.DrawImage(session, ((IntPtr)dataPtr).ToInt32(), 4000, 3000);
+                        this.surfaces.Add(YUVHelper.SharedInstance.CreateDirect3DSurface(((IntPtr)dataPtr).ToInt32(), (int)this.renderSize.Width, (int)this.renderSize.Height));
                     }
-                }       
+                }
             }
 
-            this.draw();
+            System.Threading.TimerCallback callback = new System.Threading.TimerCallback(timeTask);
 
-            timestamp += sw.ElapsedMilliseconds;
+            taskTimer = new System.Threading.Timer(callback, null, 0, -1);
 
-            if (this.timestamp >= 1000)
-            {
-                this.fpsRate = this.countsOfFPS;
+            System.Threading.TimerCallback callback2 = new System.Threading.TimerCallback(timeTask2);
 
-                this.countsOfFPS = 0;
+            taskTimer2 = new System.Threading.Timer(callback2, null, 0, -1);
 
-                this.timestamp = 0;
-            }
+            System.Threading.TimerCallback callback3 = new System.Threading.TimerCallback(timeTask3);
 
-            this.sw.Restart();
+            taskTimer3 = new System.Threading.Timer(callback3, null, 0, -1);
 
-            GC.Collect();
+            System.Threading.TimerCallback callback4 = new System.Threading.TimerCallback(timeTask4);
+
+            taskTimer4 = new System.Threading.Timer(callback4, null, 0, -1);
+
+            System.Threading.TimerCallback callback5 = new System.Threading.TimerCallback(timeTask5);
+
+            taskTimer5 = new System.Threading.Timer(callback5, null, 0, -1);
+
+            System.Threading.TimerCallback callback6 = new System.Threading.TimerCallback(timeTask6);
+
+            taskTimer6 = new System.Threading.Timer(callback6, null, 0, -1);
+
+            System.Threading.TimerCallback callback7 = new System.Threading.TimerCallback(timeTask7);
+
+            taskTimer7 = new System.Threading.Timer(callback7, null, 0, -1);
+
+            System.Threading.TimerCallback callback8 = new System.Threading.TimerCallback(timeTask8);
+
+            taskTimer8 = new System.Threading.Timer(callback8, null, 0, -1);
+
+            System.Threading.TimerCallback callback9 = new System.Threading.TimerCallback(timeTask9);
+
+            taskTimer9 = new System.Threading.Timer(callback9, null, 0, -1);
+
+            System.Threading.TimerCallback callback10 = new System.Threading.TimerCallback(timeTask10);
+
+            taskTimer10 = new System.Threading.Timer(callback10, null, 0, -1);
+
+            System.Threading.TimerCallback callback11 = new System.Threading.TimerCallback(timeTask11);
+
+            taskTimer11 = new System.Threading.Timer(callback11, null, 0, -1);
+
+            System.Threading.TimerCallback callback12 = new System.Threading.TimerCallback(timeTask12);
+
+            taskTimer12 = new System.Threading.Timer(callback12, null, 0, -1);
+
+            System.Threading.TimerCallback callback13 = new System.Threading.TimerCallback(timeTask13);
+
+            taskTimer13 = new System.Threading.Timer(callback13, null, 0, -1);
+
+            System.Threading.TimerCallback callback14 = new System.Threading.TimerCallback(timeTask14);
+
+            taskTimer14 = new System.Threading.Timer(callback14, null, 0, -1);
+
+            System.Threading.TimerCallback callback15 = new System.Threading.TimerCallback(timeTask15);
+
+            taskTimer15 = new System.Threading.Timer(callback15, null, 0, -1);
+
+            System.Threading.TimerCallback callback16 = new System.Threading.TimerCallback(timeTask16);
+
+            taskTimer16 = new System.Threading.Timer(callback16, null, 0, -1);
+
+            System.Threading.TimerCallback callback17 = new System.Threading.TimerCallback(timeTask17);
+
+            taskTimer17 = new System.Threading.Timer(callback17, null, 0, -1);
+
+            System.Threading.TimerCallback callback18 = new System.Threading.TimerCallback(timeTask18);
+
+            taskTimer18 = new System.Threading.Timer(callback18, null, 0, -1);
+
+            System.Threading.TimerCallback callback19 = new System.Threading.TimerCallback(timeTask19);
+
+            taskTimer19 = new System.Threading.Timer(callback19, null, 0, -1);
+
+            System.Threading.TimerCallback callback20 = new System.Threading.TimerCallback(timeTask20);
+
+            taskTimer20 = new System.Threading.Timer(callback20, null, 0, -1);
         }
 
-        private void draw()
+        private void timeTask(Object stateInfo)
         {
-            this.countsOfFPS++;
+            long j = 0;
 
-            using (var session = this.swapChain.CreateDrawingSession(Colors.Black))
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask2(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer2.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask3(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer3.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask4(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer4.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask5(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer5.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask6(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer6.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask7(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer7.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask8(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer8.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask9(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer9.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask10(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer10.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask11(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer11.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask12(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer12.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask13(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer13.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask14(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer14.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask15(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer15.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask16(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer16.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask17(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer17.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask18(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer18.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask19(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer19.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void timeTask20(Object stateInfo)
+        {
+            long j = 0;
+
+            for (int i = 0; i < 2000000; i++)
+            {
+                j += 1;
+            }
+
+            this.taskTimer20.Change(TimeSpan.FromTicks(333333), System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        private void fpsTask(object sender, object e)
+        {
+            this.fps = this.fpsCount;
+
+            this.fpsCount = 0;
+        }
+
+        private void CanvasAnimatedControl_Draw(Microsoft.Graphics.Canvas.UI.Xaml.ICanvasAnimatedControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasAnimatedDrawEventArgs args)
+        {
+            using (var session = args.DrawingSession)
             {
                 session.Antialiasing = CanvasAntialiasing.Aliased;
 
-                if (this.renderTarget != null)
+                float unitWidth = (float)sender.Size.Width / 8;
+
+                float unitHeight = (float)sender.Size.Height / 8;
+
+                int index = 0;
+
+                for (int row = 0; row < 4; row++)
                 {
-                    session.DrawImage(this.renderTarget, new Rect(new Point(0, 0), this.swapChain.Size));
+                    for (int col = 0; col < 4; col++)
+                    {
+                        Rect destinationRect = new Rect(unitWidth * col, unitHeight * row, unitWidth, unitHeight);
+
+                        Rect sourceRect = new Rect(0, 0, this.renderSize.Width, this.renderSize.Height);
+
+                        YUVHelper.SharedInstance.DrawImage(session, this.surfaces.ElementAt(index), destinationRect, sourceRect);
+                    }
+
+                    index++;
                 }
 
-                session.DrawText("fps: " + this.fpsRate, 0, 0, Colors.Red);
+                session.DrawText(" FPS: " + this.fps, 0, 0, Colors.Red);
             }
 
-            this.swapChain.Present();
+            this.fpsCount++;
+        }
+
+        private void CanvasAnimatedControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            CanvasAnimatedControl control = sender as CanvasAnimatedControl;
+
+            control.TargetElapsedTime = TimeSpan.FromTicks(333333);
+
+            control.CustomDevice = YUVHelper.SharedInstance.Device;
         }
     }
 }
