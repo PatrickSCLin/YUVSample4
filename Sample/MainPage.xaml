@@ -9,6 +9,6 @@
     mc:Ignorable="d">
 
     <Grid>
-        <canvas:CanvasAnimatedControl Loaded="CanvasAnimatedControl_Loaded" Draw="CanvasAnimatedControl_Draw"/>
+        <canvas:CanvasAnimatedControl Loaded="CanvasAnimatedControl_Loaded" CreateResources="CanvasAnimatedControl_CreateResources" Update="CanvasAnimatedControl_Update" Draw="CanvasAnimatedControl_Draw" SizeChanged="CanvasAnimatedControl_SizeChanged"/>
     </Grid>
 </Page>
