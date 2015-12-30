@@ -45,7 +45,7 @@ YUVHelper::YUVHelper()
 	win2d_device = CanvasDevice::CreateFromDirect3D11Device(CreateDirect3DDevice(_dxgi_device.Get()));
 
 	ComPtr<ID2D1Device> _d2d_device = GetWrappedResource<ID2D1Device>(win2d_device);
-
+	
 	DX::ThrowIfFailed(_d2d_device.As(&d2d_device));
 }
 
@@ -68,7 +68,7 @@ IDirect3DSurface^ YUVHelper::CreateDirect3DSurface(int32 dataPtr, int width, int
 
 	_d3d_texture_desc.Format = DXGI_FORMAT::DXGI_FORMAT_NV12;
 
-	_d3d_texture_desc.Usage = D3D11_USAGE::D3D11_USAGE_DEFAULT;
+	_d3d_texture_desc.Usage = D3D11_USAGE::D3D11_USAGE_DYNAMIC;
 
 	_d3d_texture_desc.SampleDesc.Count = 1;
 
@@ -76,7 +76,7 @@ IDirect3DSurface^ YUVHelper::CreateDirect3DSurface(int32 dataPtr, int width, int
 
 	_d3d_texture_desc.BindFlags = D3D11_BIND_FLAG::D3D11_BIND_SHADER_RESOURCE;
 
-	_d3d_texture_desc.CPUAccessFlags = 0;
+	_d3d_texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_FLAG::D3D11_CPU_ACCESS_WRITE;
 
 	_d3d_texture_desc.MiscFlags = 0;
 
@@ -97,7 +97,7 @@ IDirect3DSurface^ YUVHelper::CreateDirect3DSurface(int32 dataPtr, int width, int
 	return Windows::Graphics::DirectX::Direct3D11::CreateDirect3DSurface(_dxgi_surface.Get());
 }
 
-CanvasVirtualBitmap^ YUVHelper::CreateCanvasVirtualBimap(CanvasDrawingSession^ session, IDirect3DSurface^ surface, int width, int height)
+CanvasVirtualBitmap^ YUVHelper::CreateCanvasVirtualBimap(CanvasDrawingSession^ session, IDirect3DSurface^ surface)
 {
 	ComPtr<ID2D1DeviceContext1> _d2d_context = GetWrappedResource<ID2D1DeviceContext1>(session);
 
@@ -113,7 +113,7 @@ CanvasVirtualBitmap^ YUVHelper::CreateCanvasVirtualBimap(CanvasDrawingSession^ s
 
 	ComPtr<ID2D1ImageSource> _d2d_image_source;
 
-	DX::ThrowIfFailed(_d2d_context2->CreateImageSourceFromDxgi(surfaces, 1, DXGI_COLOR_SPACE_TYPE::DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS::D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_NONE, &_d2d_image_source));
+	DX::ThrowIfFailed(_d2d_context2->CreateImageSourceFromDxgi(surfaces, 1, DXGI_COLOR_SPACE_TYPE::DXGI_COLOR_SPACE_YCBCR_FULL_G22_NONE_P709_X601, D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS::D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_LOW_QUALITY_PRIMARY_CONVERSION, &_d2d_image_source));
 
 	CanvasVirtualBitmap^ win2d_bitmap = GetOrCreate<CanvasVirtualBitmap>(Device, _d2d_image_source.Get());
 
@@ -124,12 +124,12 @@ CanvasVirtualBitmap^ YUVHelper::CreateCanvasVirtualBimap(CanvasDrawingSession^ s
 {
 	IDirect3DSurface^ surface = CreateDirect3DSurface(dataPtr, width, height);
 
-	return CreateCanvasVirtualBimap(session, surface, width, height);
+	return CreateCanvasVirtualBimap(session, surface);
 }
 
 void YUVHelper::DrawImage(CanvasDrawingSession^ session, IDirect3DSurface^ surface, Rect destinationRect, Rect sourceRect)
 {
-	CanvasVirtualBitmap^ bitmap = CreateCanvasVirtualBimap(session, surface, sourceRect.Width, sourceRect.Height);
+	CanvasVirtualBitmap^ bitmap = CreateCanvasVirtualBimap(session, surface);
 
 	DrawImage(session, bitmap, destinationRect, sourceRect);
 }
@@ -143,7 +143,28 @@ void YUVHelper::DrawImage(CanvasDrawingSession^ session, int32 dataPtr, Rect des
 
 void  YUVHelper::DrawImage(CanvasDrawingSession^ session, CanvasVirtualBitmap^ bitmap, Rect destinationRect, Rect sourceRect)
 {
-	ComPtr<ID2D1DeviceContext1> _d2d_context = GetWrappedResource<ID2D1DeviceContext1>(session);
-
 	session->DrawImage(bitmap, destinationRect, sourceRect);
+}
+
+void YUVHelper::UpdateSurface(IDirect3DSurface^ surface, int32 dataPtr)
+{
+	ComPtr<IDXGISurface> _dxgi_surface;
+
+	DX::ThrowIfFailed(GetDXGIInterface(surface, _dxgi_surface.GetAddressOf()));
+
+	ComPtr<ID3D11Texture2D> _d3d_texture;
+
+	DX::ThrowIfFailed(_dxgi_surface.As(&_d3d_texture));
+
+	D3D11_TEXTURE2D_DESC _d3d_texture_desc;
+
+	_d3d_texture->GetDesc(&_d3d_texture_desc);
+
+	D3D11_MAPPED_SUBRESOURCE _resource;
+
+	d3d_context->Map(_d3d_texture.Get(), 0, D3D11_MAP::D3D11_MAP_WRITE_DISCARD, 0, &_resource);
+
+	memcpy(_resource.pData, (void*)IntPtr(dataPtr), sizeof(byte) * (size_t)(_d3d_texture_desc.Width * _d3d_texture_desc.Height * 1.5));
+
+	d3d_context->Unmap(_d3d_texture.Get(), 0);
 }

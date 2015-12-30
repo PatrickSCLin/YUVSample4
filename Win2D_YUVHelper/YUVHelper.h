@@ -36,7 +36,7 @@ namespace Win2D
 
 			CanvasVirtualBitmap^ CreateCanvasVirtualBimap(CanvasDrawingSession^ session, int32 dataPtr, int width, int height);
 
-			CanvasVirtualBitmap^ CreateCanvasVirtualBimap(CanvasDrawingSession^ session, IDirect3DSurface^ surface, int width, int height);
+			CanvasVirtualBitmap^ CreateCanvasVirtualBimap(CanvasDrawingSession^ session, IDirect3DSurface^ surface);
 
 			void DrawImage(CanvasDrawingSession^ session, IDirect3DSurface^ surface, Rect destinationRect, Rect sourceRect);
 
@@ -44,7 +44,11 @@ namespace Win2D
 
 			void DrawImage(CanvasDrawingSession^ session, int32 dataPtr, Rect destinationRect, Rect sourceRect);
 
+			void UpdateSurface(IDirect3DSurface^ surface, int32 dataPtr);
+
 		private:
+
+			int32 dataPtr;
 
 			D3D_FEATURE_LEVEL d3d_feature;
 
